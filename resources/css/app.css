@@ -1,0 +1,8 @@
+@import url('./_config.css');
+@import url("./messageBox.css");
+
+.centered-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
