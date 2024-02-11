@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageBroadcast;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Http\Request;
 
@@ -14,14 +15,13 @@ class MessageController extends Controller
     
     public function broadcast(Request $request) 
     {
-        broadcast(new PusherBroadcaster($request->get('message')))->toOthers();
-        return view('messages.broadcast', ['message' => $request->get('message')]);
-        
-    }
-
-    public function receive(Request $request) 
-    {
-        return view('messages.receive', ['message' => $request->get('message')]);
-        
+        // broadcast(new PusherBroadcaster($request->get('message')))->toOthers();
+        if($request->get('broadcast')) {
+            event(new MessageBroadcast($request->get('message')));
+            return view('messages.broadcast', ['message' => $request->get('message')]);
+        } else {
+            return view('messages.receive', ['message' => $request->get('message')]);
+        }
     }
 }
+

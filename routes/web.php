@@ -26,6 +26,6 @@ Route::get('/', function () {
 Route::post('/support', 'App\Http\Controllers\UserController@index');
 Route::post('/dashboard', 'App\Http\Controllers\AgentController@index');
 
-Route::get('/messages', 'App\Http\Controllers\MessageController@index');
-Route::post('/messages/broadcast', 'App\Http\Controllers\MessageController@broadcast');
-Route::post('/messages/receive', 'App\Http\Controllers\MessageController@receive');
+// Route::post('/messages', 'App\Http\Controllers\MessageController@broadcast');
+Route::post('/broadcast', 'App\Http\Controllers\MessageController@broadcast');
+Route::post('/receive', 'App\Http\Controllers\MessageController@receive');

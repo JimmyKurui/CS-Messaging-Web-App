@@ -1,3 +1,25 @@
+:root {
+    --message-color: aliceblue;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Nunito", sans-serif;
+}
+
+:root {
+    --message-color: aliceblue;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Nunito", sans-serif;
+}
+
 .chat {
   margin-top: 5rem;
   margin-bottom: 3rem;
@@ -210,13 +232,6 @@
   width: 2.35rem;
   height: 2.35rem;
   background: url("https://assets.edlin.app/icons/font-awesome/paper-plane/paper-plane-regular.svg") center no-repeat;
-}
-
-body {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Nunito", sans-serif;
 }
 
 .centered-buttons {

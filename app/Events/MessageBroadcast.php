@@ -33,7 +33,7 @@ class MessageBroadcast implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return ['public'];
+        return new Channel('public');
     }
     
     public function broadcastAs()
