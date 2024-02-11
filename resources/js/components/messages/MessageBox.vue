@@ -60,7 +60,6 @@ export default {
     },
     methods: {
         submitMessage() {
-            console.log('clicked form', this.ascOrderedMessages)
                 console.log('clicked form next tick', this.ascOrderedMessages)
                 let code = this.cookie.user_id
                 let route = 'messages'
@@ -76,13 +75,15 @@ export default {
                     ticket_id: this.ascOrderedMessages[this.ascOrderedMessages.length - 1].ticket_id,
                     isAgent: this.cookie.agent_id ? 1 : 0,
                 }).then(res => {
-                    this.messages.push({
-                        user_id: parseInt(this.cookie.agent_id ?? this.cookie.user_id),
-                        timestamp: moment.utc().format('YYYY-MM-DD H:m:s'),
-                        body: this.newMessage,
-                        isAgent: this.cookie.agent_id ? true : false,
-                        ticket_id: this.ascOrderedMessages[this.ascOrderedMessages.length - 1].ticket_id,
-                    })
+                    const newMessage = {
+                        id: res.data.id,
+                        timestamp: res.data.timestamp,
+                        body: res.data.body,
+                        user_id: res.data.user_id ?? res.data.agent_id,
+                        ticket_id: res.data.ticket_id,
+                        isAgent: !!parseInt(res.data.agent_id),
+                    }
+                    this.$emit('update:userChatHistory', newMessage)
                     this.broadcast = false
                     this.newMessage = ''
                     console.log(this.ascOrderedMessages)
@@ -93,21 +94,9 @@ export default {
     },
     computed: {
         ascOrderedMessages() {
-            const messages = [...this.messages].sort((a, b) => {
-                // Convert timestamp strings to Date objects for comparison
-                const timestampA = new Date(a.timestamp);
-                const timestampB = new Date(b.timestamp);
-
-                if (timestampA < timestampB) {
-                    return -1;
-                } else if (timestampA > timestampB) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            })
-            return messages
-        }
+            return this.messages.flatMap(item => item.combinedMessages)
+            
+        },
     },
     created() {
         // console.log('create messageBox.', this.cookie, this.messages)
@@ -117,17 +106,17 @@ export default {
         window.Echo.channel('public').listen('.chat', (event) => {
             if (this.broadcast === false) {
                 console.log('event emitted', event)
-                this.messages.push({
-                    user_id: event.code,
+                const newMessage = {
+                    user_id: parseInt(event.code),
                     timestamp: moment.utc().format('YYYY-MM-DD H:m:s'),
                     body: event.message,
-                    isAgent: event.isAgent,
-                    ticket_id: event.ticketId,
-                })
-                console.log(this.ascOrderedMessages)
+                    isAgent: !!parseInt(event.isAgent),
+                    ticket_id: parseInt(event.ticketId),
+                }
+                this.$emit('update:userChatHistory', newMessage)
             }
         })
-        // console.log('After event ctrl', (broadcast? 'true': 'false'))
+        console.log('mounted MessageBox')
     }
 }
 </script>

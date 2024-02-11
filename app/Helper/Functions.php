@@ -34,21 +34,43 @@ class Functions
             //     ->select('messages.*', 'ticket_messages.agent_id', 'ticket_messages.timestamp as ticket_timestamp', 'ticket_messages.body as ticket_body')
             //     ->get();
 
-            // ----- Union -------
-            $userMessages = DB::table('messages')
-                ->select('user_id', 'timestamp', 'body', 'ticket_id')
-                ->selectRaw('false as isAgent')
-                ->where('user_id', '=', $userId);
-            $ticketIds = $userMessages->pluck('ticket_id');
+            // ----- Union Of Messages and Ticket_Messages only -------
+            // $userMessages = Message::select('id','user_id', 'timestamp', 'body', 'ticket_id')
+            //     ->selectRaw('false as isAgent')
+            //     ->where('user_id', '=', $userId);
 
-            $relatedTicketMessages = DB::table('ticket_messages')
-                ->select('agent_id', 'timestamp', 'body', 'ticket_id')
-                ->selectRaw('true as isAgent')
-                ->whereIn('ticket_id', $ticketIds);
+            // $ticketIds = $userMessages->pluck('ticket_id');
 
-            $userConversations = $userMessages->union($relatedTicketMessages)->orderBy('timestamp')->get();
+            // $relatedTicketMessages = TicketMessage::select('id','agent_id', 'timestamp', 'body', 'ticket_id')
+            //     ->selectRaw('true as isAgent')
+            //     ->whereIn('ticket_id', $ticketIds);
 
+            // $userConversations = $userMessages->union($relatedTicketMessages)
+            //     ->orderBy('timestamp')
+            //     ->with('ticket')
+            //     ->get();
+
+            // Ticket with all message types then join
+            $ticketsWithBothMessages = Ticket::with('messages', 'ticketMessages')->where('user_id', $userId)->orderBy('id')->get();
+
+            foreach ($ticketsWithBothMessages as $ticket) {
+                $messages = $ticket->messages()->select('id', 'timestamp', 'body', 'user_id','ticket_id')
+                    ->selectRaw("false as isAgent");
+                    // ->get();
+
+                $ticketMessages = $ticket->ticketMessages()->select('id', 'timestamp', 'body', 'agent_id','ticket_id')
+                    ->selectRaw("true as isAgent");
+                    // ->get();
+
+                $combinedMessages = $messages->union($ticketMessages)->orderBy('timestamp')->get();
+                $ticket->setAttribute('combinedMessages', $combinedMessages);
+                unset($ticket->messages);
+                unset($ticket->ticketMessages);
+            }        
+
+            $userConversations = $ticketsWithBothMessages;
             return $userConversations;
+
         } catch (Exception $th) {
             throw $th;
         }

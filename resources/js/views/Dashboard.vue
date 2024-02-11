@@ -27,69 +27,96 @@
             <div class="col-md-6 bg-secondary">
                 <h3>Messages</h3>
                 <div class="message-box">
-                    <MessageBox :messages="userChatHistory" :cookie="cookie" />
+                    <MessageBox 
+                    :messages="userChatHistory" 
+                    :cookie="cookie"
+                    @update:userChatHistory="(newMessage) => {this.$emit('update:userChatHistory', newMessage)}" />
                 </div>
             </div>
 
             <!-- Agent: Ticket Controls -->
             <div  class="col-md-3 right-menu">
-                <div v-if="cookie.agent_id" class="ticket-menu">
-                    <h3>Ticket Controls</h3>
-                    <form action="#" method="post" id="ticketForm">
-                        <div class="form-group">
-                            <label for="title">Title</label>
-                            <input type="text" class="form-control" id="title" placeholder="Enter ticket title..." value=""
-                                required>
-                        </div>
-                        <div class="form-group">
-                            <label for="status">Status</label>
-                            <select class="form-control" id="status" required>
-                                <!-- @foreach($statuses as $status) -->
-                                <!-- <option value="{{ $status->id}}">{{ $status -> name }}</option> -->
-                                <!-- @endforeach -->
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="priority">Priority</label>
-                            <select class="form-control" id="priority" required>
-                                <!-- @foreach($priorities as $priority) -->
-                                <!-- <option value="{{$priority->id }}">{{ $priority -> name }}</option> --> -->
-                                <!-- @endforeach -->
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="priority">Category</label>
-                            <select class="form-control" id="priority">
-                                <!-- @foreach($categories as $category) -->
-                                <!--  <option value="{{ $category->id }}">{{ $category -> name }}</option> -->
-                                <!-- @endforeach -->
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="title">Description</label>
-                            <input type="text" class="form-control" id="title" placeholder="Enter ticket title...">
-                        </div>
-                        <div class="form-group">
-                            <label for="tags">Tags</label>
-                            <input type="text" class="form-control" id="tags" placeholder="Enter tags...">
-                        </div>
-                        <div class="form-group">
-                            <label for="start-time">Start Time</label>
-                            <input type="datetime-local" class="form-control" id="start-time" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="end-time">End Time</label>
-                            <input type="datetime-local" class="form-control" id="end-time">
-                        </div>
-                        <button type="submit" class="btn btn-primary">Create Ticket</button>
-                    </form>
-                </div>
+                <v-form v-if="cookie.agent_id" v-model="valid"  @submit.prevent="saveTicket">
+                    <v-container>
+                    <v-row>
+                        <v-col cols="12" class="pa-0" >
+                            <v-text-field
+                                v-model="openOrPendingTicket.title"
+                                label="First name"
+                                required
+                                dense
+                            variant="outlined"
+                            ></v-text-field>
+                        </v-col>
+
+                        <v-col cols="12" class="pa-0">
+                            <v-select
+                                :items="statuses"
+                                v-model="openOrPendingTicket.status_id"
+                                item-value="value"
+                                item-title="name"
+                                label="Status"
+                                required
+                            ></v-select>
+                        </v-col>
+                        <v-col cols="12" class="pa-0">
+                            <v-select
+                                :items="priorities"
+                                v-model="openOrPendingTicket.priority_id"
+                                item-value="value"
+                                item-title="name"
+                                label="Priority"
+                                required
+                            ></v-select>
+                        </v-col>
+
+                        <v-col cols="12" class="pa-0">
+                            <v-select
+                                :items="categories"
+                                v-model="openOrPendingTicket.category_id"
+                                item-value="value"
+                                item-title="name"
+                                label="Category"
+                                required
+                            ></v-select>
+                        </v-col> 
+
+                       <v-col cols="12" class="pa-0">
+                            <v-text-field
+                                v-model="openOrPendingTicket.description"
+                                label="Description"
+                                dense
+                                variant="outlined"
+                            ></v-text-field>
+                        </v-col> 
+
+                        <v-col cols="12" class="pa-0" md="6">
+                            <div class="form-group">
+                                <label for="start-time">Start Time</label>
+                                <input type="datetime-local" class="form-control" id="start-time" required>
+                            </div>
+                        </v-col>
+
+                        <v-col cols="12" class="pa-0" md="6">
+                            <div class="form-group">
+                                <label for="start-time">End Time</label>
+                                <input type="datetime-local" class="form-control" id="end-time" disabled required>
+                            </div>
+                        </v-col>
+
+                        <v-col cols="12" class="pa-0">
+                            <v-btn type="submit" color="success">Save</v-btn>
+                        </v-col>
+                    </v-row>
+                    </v-container>
+                </v-form>
             </div>
         </div>
     </div>
 </template>
 
 <script>
+import moment from 'moment'
 import MessageBox from '../components/messages/MessageBox.vue'
 
 export default {
@@ -102,17 +129,78 @@ export default {
         cookie: {
             type: Object,
             default: {}
-        }
-    },    
+        },
+        ticketData: {
+            type: Object,
+            default: {}
+        },
+    },
+    data: () => ({
+        valid: false,
+        statuses: [
+            {name :'Open', value: 1},  
+            {name :'Pending', value: 2},  
+            {name :'Closed', value: 3}, 
+        ],
+        priorities: [
+            {name :'Low', value: 1},  
+            {name :'Medium', value: 2},  
+            {name :'High', value: 3}, 
+        ],
+        categories: [
+            {name :'General', value: 1},  
+            {name :'Finance', value: 2},  
+            {name :'Admin', value: 3}, 
+        ],
+        ticket: {
+            title: 'xx',
+            status_id: 1,
+            priority_id: 1,
+            category_id: 1,
+            description: '',
+            start_time: new Date(moment.utc().format('YYYY-MM-DD H:m:s')),
+            end_time: moment.utc().format('YYYY-MM-DD H:m:s'),
+        },
+        innerTicketData: {}
+    }),
+    computed: {
+        innerTicketData: {
+            get() { return this.ticketData},
+            set(newVal) {
+                // this.tick
+            } 
+        },
+        formattedDate() {
+            return this.ticket.start_time.toLocaleDateString('en-US')
+        },
+        openOrPendingTicket() {
+            const descTickets =  [...this.userChatHistory].reverse()
+            const firstTicket = descTickets.find((message) => message.end_time == null && message.status_id != 3 )
+            return firstTicket
+        },
+    },
+    methods: {
+        saveTicket() {
+            console.log('saved ticket', this.ticket.start_time)
+        },
+    },
+    created() {
+
+    },
     mounted() {
-        console.log('mounted dashboard', this.cookie, this.userChatHistory)
+        console.log('openOrPendingTicket', this.openOrPendingTicket)
+        console.log('mounted dashboard', this.userChatHistory, this.ticketData)
     },
     watch: {
-        cookie(val) {
-            console.log('dashboard watch cookie ', this.cookie, val)
+        ticketData(newVal) {
+            console.log('dashboard watch ticket ', newVal)
+            newVal.start_time =  new Date(newVal.start_time)
+            newVal.end_time =  new Date(newVal.end_time)
+            this.ticket = newVal
+            console.log('updated ticket', this.ticket)
         },
-        userChatHistory(newval) {
-            console.log('dashboard new history', newval)
+        userChatHistory(newVal) {
+            console.log('dashboard new history', newVal)
             
         } 
     }

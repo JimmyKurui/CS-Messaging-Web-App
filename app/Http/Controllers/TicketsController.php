@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Helper\Functions;
 use App\Models\Category;
+use App\Models\Message;
 use App\Models\Ticket;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -31,29 +33,38 @@ class TicketsController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => ['required', 'string', 'max:255'],
-            'priority_id' => ['required', 'integer', 'between:1,3'],
-            'status_id' => ['required', 'integer', 'between:1,3'],
-            'agent_id' => ['required', 'integer'],
-            'user_id' => ['required', 'integer'],
-        ]);
+        if($request->has('autoTicket')) {
+            $priorityAndCategory = Functions::checkPriorityAndCategory($request->message);
+        }
+        else {
+            $request->validate([
+                'title' => ['required', 'string', 'max:255'],
+                'priority_id' => ['required', 'integer', 'between:1,3'],
+                'status_id' => ['required', 'integer', 'between:1,3'],
+                'agent_id' => ['required', 'integer'],
+                'user_id' => ['required', 'integer'],
+            ]);
+        }
 
         try {
-            return DB::transaction(function () use ($request) {
-                
-                $ticket = Ticket::create([
+            return DB::transaction(function () use ($request, $priorityAndCategory) {
+                $ticket = new Ticket();
+                // $ticket = Ticket::create
+                $ticket->fill([
                     'title' => $request->title ?? 'New title '.Carbon::now()->format('Y-m-d H:i:s'),
                     'description' => $request->description,
                     'labels' => $request->labels,
-                    'category_id' => $request->category_id,
-                    'priority_id' => $request->priority_id,
-                    'status_id' => $request->status_id,
-                    'agent_id' => $request->agent_id,
-                    'user_id' => $request->user_id,
+                    'category_id' => $request->category_id ?? $priorityAndCategory['category'],
+                    'priority_id' => $request->priority_id ?? $priorityAndCategory['priority'],
+                    'status_id' => $request->statusId ?? 1,
+                    'agent_id' => $request->agentId,
+                    'user_id' => $request->userId,
                     'start_time' => Carbon::now()->format('Y-m-d H:i:s'),
                     'end_time' => null
                 ]);
+
+                // Update ticket field on corresponding unticketed messages
+                // Message::whereIn('id', $request->messageIds)->update(['ticket_id' => $ticket->id]);
 
                 return response()->json($ticket);
 

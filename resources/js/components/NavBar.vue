@@ -57,13 +57,38 @@ export default {
             selectedUnresolvedUser: 1
         }
     },
+    computed: {
+        
+    },
     methods: {
         chooseUser(user) {
             window.axios.get(`/api/conversations?user=${user}`)
-            .then(res => {
-                
-                this.$emit('userConversationEmitted', res.data)
-            })
+            .then(conversations => {
+                const combinedMessageText = conversations.data.reduce((messageText, note) => {
+                    if(!note.isAgent) { 
+                        messageText += note.body
+                    }
+                    return messageText
+                }, '')
+
+                const messageIds = conversations.data.map((note) => {if(!note.isAgent) return note.id; })
+                console.log('combinedMessage', combinedMessageText, messageIds)
+
+                window.axios.post(`/api/tickets?autoTicket`, {
+                    userId: user,
+                    agentId: this.cookie.agent_id,
+                    message: combinedMessageText,
+                    messageIds
+                }).then(autoTicket => {
+                    console.log('auto ticket', autoTicket.data)
+                    this.$emit('autoTicketCreated', autoTicket.data)
+                }).catch(error => console.log(error))
+
+                this.$emit('userConversationEmitted', conversations.data)
+            }).catch(error => console.log(error))
+        },
+        unticketedUserMessages(userConversation) {
+            // userConversation
         }
     },
     mounted() {
