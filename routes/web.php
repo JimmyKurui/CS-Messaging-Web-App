@@ -16,13 +16,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    $users = User::all();
-    $agents = Agent::all();
-    return view('welcome', compact('users', 'agents'));
+    return view('layouts.app');
 });
 
 
-Route::post('/support', 'App\Http\Controllers\UserController@index');
-Route::post('/dashboard', 'App\Http\Controllers\AgentController@index');
+// Route::post('/support', 'App\Http\Controllers\UserController@index');
+// Route::post('/dashboard', 'App\Http\Controllers\AgentController@index');
 
-Route::post('/broadcast', 'App\Http\Controllers\MessageController@broadcast');
+Route::post('/broadcast', 'App\Http\Controllers\MessageController@store');

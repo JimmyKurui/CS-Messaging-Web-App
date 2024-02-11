@@ -15,7 +15,7 @@ class CategoriesTableSeeder extends Seeder
     public function run()
     {
         $categories = [
-            ['name' => 'Operations'],
+            ['name' => 'General'],
             ['name' => 'Finance'],
             ['name' => 'Admin'],
         ];

@@ -46,22 +46,38 @@
         @if(isset($agent))
         <div class="col-md-3 sidebar">
             <h3>Ticket Controls</h3>
-            <form action="#" method="post">
+            <form action="#" method="post" id="ticketForm">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" class="form-control" id="title" placeholder="Enter ticket title..." value="" required>
+                </div>
                 <div class="form-group">
                     <label for="status">Status</label>
-                    <select class="form-control" id="status">
-                        <option value="open">Open</option>
-                        <option value="closed">Closed</option>
-                        <option value="pending">Pending</option>
+                    <select class="form-control" id="status" required>
+                        @foreach($statuses as $status)
+                        <option value="{{ $status->id}}">{{$status->name}}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="priority">Priority</label>
-                    <select class="form-control" id="priority">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
+                    <select class="form-control" id="priority" required>
+                        @foreach($priorities as $priority)
+                        <option value="{{$priority->id }}">{{$priority->name}}</option>
+                        @endforeach
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Category</label>
+                    <select class="form-control" id="priority">
+                        @foreach($categories as $category)
+                        <option value="{{ $category->id }}">{{$category->name}}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="title">Description</label>
+                    <input type="text" class="form-control" id="title" placeholder="Enter ticket title...">
                 </div>
                 <div class="form-group">
                     <label for="tags">Tags</label>
@@ -69,15 +85,11 @@
                 </div>
                 <div class="form-group">
                     <label for="start-time">Start Time</label>
-                    <input type="datetime-local" class="form-control" id="start-time">
+                    <input type="datetime-local" class="form-control" id="start-time" required>
                 </div>
                 <div class="form-group">
                     <label for="end-time">End Time</label>
                     <input type="datetime-local" class="form-control" id="end-time">
-                </div>
-                <div class="form-group">
-                    <label for="title">Title</label>
-                    <input type="text" class="form-control" id="title" placeholder="Enter ticket title...">
                 </div>
                 <button type="submit" class="btn btn-primary">Create Ticket</button>
             </form>
@@ -86,6 +98,6 @@
     </div>
 </div>
 
-<script>const userMessages = @json($messages);
+<script>const chatHistory = @json($messages);
 </script>
 @endsection

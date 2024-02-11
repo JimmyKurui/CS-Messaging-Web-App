@@ -17,16 +17,22 @@ class MessageBroadcast implements ShouldBroadcast
     // Message and sender's id/ any other identifier
     public $message;
     public $code;
+    public $isAgent;
+    public $ticketId;
 
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($message, $code='')
+    public function __construct($message, $code, $isAgent=false, $ticketId)
     {
         $this->message = $message;
         $this->code = $code;
+        $this->isAgent = $isAgent;
+        $this->ticketId = $ticketId;
+
+
     }
 
     /**

@@ -28,7 +28,7 @@ class MessageSeeder extends Seeder
 
             Message::insert([
                 'user_id' => $userId,
-                'timestamp_utc' => $time,
+                'timestamp' => $time,
                 'body' => $messageBody,
             ]);
         }

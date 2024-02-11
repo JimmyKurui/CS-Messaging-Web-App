@@ -16,9 +16,14 @@ class CreateMessagesTable extends Migration
     public function up()
     {
             Schema::create('messages', function (Blueprint $table) {
-                $table->integer('user_id');
-                $table->dateTime('timestamp_utc')->default(Carbon::now());
+                $table->id();
+                $table->dateTime('timestamp')->default(Carbon::now());
                 $table->text('body');
+                $table->unsignedBigInteger('user_id')->index;
+                $table->unsignedBigInteger('ticket_id')->index()->nullable();
+
+                // $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('ticket_id')->references('id')->on('tickets')->onDelete('cascade');
             });
     }
 

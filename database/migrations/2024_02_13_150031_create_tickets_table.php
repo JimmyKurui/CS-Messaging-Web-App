@@ -17,12 +17,14 @@ class CreateTicketsTable extends Migration
         Schema::create('tickets', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->dateTime('start_time');
+            $table->dateTime('end_time')->nullable();
             $table->string('description')->nullable();
             $table->string('labels')->nullable();
 
-            $table->unsignedBigInteger('category_id')->index();
             $table->unsignedBigInteger('status_id')->index()->default(1);
-            $table->unsignedBigInteger('priority_id')->index()->default(0);
+            $table->unsignedBigInteger('priority_id')->index()->default(1);
+            $table->unsignedBigInteger('category_id')->index()->nullable();
             $table->unsignedBigInteger('agent_id')->index();
             $table->unsignedBigInteger('user_id')->index();
 
@@ -31,9 +33,6 @@ class CreateTicketsTable extends Migration
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
             $table->foreign('status_id')->references('id')->on('statuses')->onDelete('cascade');
             $table->foreign('priority_id')->references('id')->on('priorities')->onDelete('cascade');
-
-
-            $table->timestamps();
         });
     }
 

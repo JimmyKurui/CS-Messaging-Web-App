@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Ticket extends Model
 {
     use HasFactory;
+    protected $guarded = [];
+    public $timestamps = false;
 
     public function agent(): HasOne
     {
@@ -64,5 +66,10 @@ class Ticket extends Model
     public function ticketMessages(): HasMany
     {
         return $this->hasMany(TicketMessage::class, 'ticket_id');
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'ticket_id');
     }
 }
