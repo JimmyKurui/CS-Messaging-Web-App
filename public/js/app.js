@@ -2118,54 +2118,88 @@ try {
 /*!******************************!*\
   !*** ./resources/js/chat.js ***!
   \******************************/
-/***/ (() => {
+/***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
+var _require = __webpack_require__(/*! lodash */ "./node_modules/lodash/lodash.js"),
+  forEach = _require.forEach;
 var messageForm = document.querySelector('#messageForm');
 var message = document.querySelector('#messageInput');
-var sender = document.querySelector('.left.message');
-var receiver = document.querySelector('.right.message');
+var sender = document.querySelector('.left.message code');
+var receiver = document.querySelector('.right.message code');
 var messages = document.querySelector('.messages');
 
 // Check if null and return to main
 try {
+  // Fetch messages from DB
+  if (window.location.pathname === '/dashboard') {
+    // Agent
+    //    getOwnerMessages();
+  } else if (window.location.pathname === '/support') {
+    // Agent
+    //    getOwnerMessages(owner.id);
+  }
+
+  // Broadcasting messages
   message.value = message.value ? message.value : 'Tell me about your issue';
   var broadcast = false;
+  var code = 'xxx';
   messageForm.addEventListener('submit', function (e) {
     e.preventDefault();
-
-    // Broadcasting messages
+    code = sender.textContent;
     if (message !== '') {
-      // console.log('Before', (broadcast? 'true': 'false'))
+      console.log('Before', broadcast ? 'true' : 'false');
       broadcast = !broadcast;
       window.axios.post('/broadcast', {
         message: message.value,
+        code: code,
         broadcast: broadcast
       }).then(function (res) {
+        console.log('success', code);
         messages.innerHTML += res.data;
         broadcast = false;
       })["catch"](function (error) {
         console.error('Error broadcasting message:', error);
       });
-      // console.log('After', (broadcast? 'true': 'false'))
+      console.log('After', broadcast ? 'true' : 'false');
     }
   });
 
   // Receiving messages
   window.Echo.channel('public').listen('.chat', function (event) {
-    // console.log('Before event ctrl', (broadcast? 'true': 'false'))
+    console.log('Before event ctrl', broadcast ? 'true' : 'false');
+    console.log('event code', code);
     if (broadcast === false) {
       window.axios.post('/broadcast', {
         message: event.message,
+        code: event.code,
         broadcast: broadcast
       }).then(function (res) {
+        console.log('event success', code);
         messages.innerHTML += res.data;
       })["catch"](function (error) {
         console.error('Error receiving message:', error);
       });
     }
-    // console.log('After event ctrl', (broadcast? 'true': 'false'))
+    console.log('After event ctrl', broadcast ? 'true' : 'false');
   });
-} catch (err) {}
+  console.log(userMessages);
+} catch (err) {
+  console.log(err);
+}
+
+// function getOwnerMessages(user=null) {
+// window.axios.get(`/api/messages${user? '?user=yes': ''}`) 
+//     .then(res => {
+
+// const userMessages = userMessages.filter((x) =>  x.user_id == owner.id)
+// for(let i = userMessages.length-1; i >= 0; i--) {
+//     console.log(userMessages[i])
+//     messages.innerHTML += userMessages[i].message
+// }
+// }).catch(error => {
+//     console.error('Error getting messages: ', error);
+// });
+// }
 
 /***/ }),
 

@@ -6,7 +6,7 @@
 
 <div class="container-fluid my-3">
     <div class="row">
-        <!-- User Column 1: Vertical Menu -->
+        <!-- User: Vertical Menu -->
         @if(isset($user))
         <div class="col-md-3 sidebar">
             <h3>User Menu</h3>
@@ -15,9 +15,9 @@
                 <li>Loans</li>
                 <li>Payments</li>
                 <li>FAQs and Guides</li>
-                <!-- Add more menu items here -->
             </ul>
         </div>
+        <!-- Support Agent: Vertical Menu -->
         @elseif(isset($agent))
         <div class="col-md-3 sidebar">
             <h3>Agent Menu</h3>
@@ -26,20 +26,23 @@
                 <li>Customers</li>
                 <li>Knowledge Hub</li>
                 <li>Analytics</li>
-                <!-- Add more menu items here -->
             </ul>
         </div>
         @endif
 
-        <!-- User/Agent Column 2: Message Box -->
+        <!-- Shared Message Box -->
         <div class="col-md-6 bg-secondary">
             <h3>Messages</h3>
             <div class="message-box">
-                @include('messages.index')
+            @if(isset($user))
+                @include('messages.index', ['user' => $user])
+            @elseif(isset($agent))
+                @include('messages.index', ['agent' => $agent])
+            @endif
             </div>  
         </div>
 
-        <!-- Agent Column 3: Ticket Controls -->
+        <!-- Agent: Ticket Controls -->
         @if(isset($agent))
         <div class="col-md-3 sidebar">
             <h3>Ticket Controls</h3>
@@ -83,4 +86,6 @@
     </div>
 </div>
 
+<script>const userMessages = @json($messages);
+</script>
 @endsection

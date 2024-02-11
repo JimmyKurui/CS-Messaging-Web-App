@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     $users = User::all();
-    // dd(($users[0]->id));
     $agents = Agent::all();
     return view('welcome', compact('users', 'agents'));
 });
@@ -26,6 +25,4 @@ Route::get('/', function () {
 Route::post('/support', 'App\Http\Controllers\UserController@index');
 Route::post('/dashboard', 'App\Http\Controllers\AgentController@index');
 
-// Route::post('/messages', 'App\Http\Controllers\MessageController@broadcast');
 Route::post('/broadcast', 'App\Http\Controllers\MessageController@broadcast');
-Route::post('/receive', 'App\Http\Controllers\MessageController@receive');
