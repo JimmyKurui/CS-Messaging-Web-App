@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class TicketsController extends Controller
 {
-    public $STATUS_RESOLVED = 3;
+    const STATUS_RESOLVED = 3;
 
     public function index(Request $request)
     {
@@ -50,6 +50,8 @@ class TicketsController extends Controller
         $priorityAndCategory = $priorityAndCategory ? $priorityAndCategory : null;
         try {
             return DB::transaction(function () use ($request, $priorityAndCategory) {
+                $this->closePreviousUnresolvedTickets(null, $request->userId);
+
                 $ticket = Ticket::create([
                     'title' => $request->title ?? 'New title '.Carbon::now()->format('Y-m-d H:i:s'),
                     'description' => $request->description,
@@ -73,15 +75,22 @@ class TicketsController extends Controller
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'title' => ['required', 'string'],
-            'start_time' => ['required'],
-            'priority_id' => ['required', 'integer', 'between:1,3'],
-            'status_id' => ['required', 'integer', 'between:1,3'],
-            'agent_id' => ['required', 'integer'],
-            'user_id' => ['required', 'integer'],
-        ]);
-
+        if($request->isMethod('PATCH')) {
+            $request->validate([
+                'agentId' => ['required', 'integer'],
+                'statusId' => ['required', 'integer'],
+            ]);
+        } else {
+            $request->validate([
+                'title' => ['required', 'string'],
+                'startTime' => ['required'],
+                'priorityId' => ['required', 'integer', 'between:1,3'],
+                'statusId' => ['required', 'integer', 'between:1,3'],
+                'agentId' => ['required', 'integer'],
+                'userId' => ['required', 'integer'],
+            ]);
+        }
+            
         try {
             return DB::transaction(function () use ($request, $id) {
                 $ticket = Ticket::findOrFail($id);
@@ -89,15 +98,17 @@ class TicketsController extends Controller
                     'title' => $request->title,
                     'description' => $request->description,
                     'labels' => $request->labels,
-                    'category_id' => $request->category_id,
-                    'priority_id' => $request->priority_id,
-                    'status_id' => $request->status_id,
-                    'agent_id' => $request->agent_id,
-                    'user_id' => $request->user_id,
-                    'start_time' => $request->start_time,
-                    'end_time' => $request->end_time,
+                    'category_id' => $request->categoryId,
+                    'priority_id' => $request->priorityId,
+                    'status_id' => $request->statusId,
+                    'agent_id' => $request->agentId,
+                    'user_id' => $request->userId,
+                    'start_time' => $request->startTime,
+                    'end_time' => $request->endTime,
                 ]);
                 $ticket->save();
+
+                $this->closePreviousUnresolvedTickets($ticket, $request->userId);
 
                 return response()->json($ticket);
 
@@ -105,5 +116,22 @@ class TicketsController extends Controller
         } catch (QueryException $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
         }
+    }
+
+    public function closePreviousUnresolvedTickets($currentTicket = null, $userId) {
+        if($currentTicket == null) {
+            // Latest open
+            $currentTicket = Ticket::where('user_id', $userId)
+                ->where('end_time',  null)
+                ->orderByDesc('id')->first();
+        }
+        Ticket::where('user_id', $userId)
+            ->where('id', '!=', $currentTicket->id)
+            ->where('end_time',  null)
+            ->update([
+                'description' => 'Closure overwrite',
+                'end_time' => Carbon::now()->format('Y-m-d H:i:s'),
+                'status_id' => self::STATUS_RESOLVED
+            ]);
     }
 }

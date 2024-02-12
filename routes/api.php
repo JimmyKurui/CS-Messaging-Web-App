@@ -39,3 +39,4 @@ Route::get('/tickets', 'App\Http\Controllers\TicketsController@index');
 Route::get('/tickets/{id}', 'App\Http\Controllers\TicketsController@show');
 Route::post('/tickets', 'App\Http\Controllers\TicketsController@store');
 Route::put('/tickets/{id}', 'App\Http\Controllers\TicketsController@update');
+Route::patch('/tickets/{id}', 'App\Http\Controllers\TicketsController@update');

@@ -9,6 +9,7 @@
         <router-view 
         @userChatHistoryEmitted="loadUserChatHistory" 
         @update:userChatHistory="updateUserChatHistory"
+        @update:unresolvedUserIssues = "getUnassignedUserIssues"
         :userChatHistory="userChatHistory" 
         :ticketData="ticketData" 
         :cookie="cookie"></router-view>
@@ -28,7 +29,6 @@ export default {
                 agent_id: null,
                 user_id: null
             },
-            ticketData: {},
         }
     },
     methods: {
@@ -53,21 +53,24 @@ export default {
             }
         },
         updateUserChatHistory(newChatMessage) {
-            const updatedUserChatHistory = JSON.parse(JSON.stringify(this.userChatHistory))
-            const ticketForUpdateIndex = this.userChatHistory.findIndex(ticket => ticket.id === newChatMessage.ticket_id);
-            if (ticketForUpdateIndex == -1) {
-                const newTicketChat = this.loadTicket(newChatMessage)
-                newTicketChat.combinedMessages = []
-                newTicketChat.combinedMessages.push(newChatMessage)
-                console.log('newTicketUpdate', newTicketChat)
-                updatedUserChatHistory.push(newTicketChat)
-                this.getUnassignedUserIssues()
-            } else {
-                updatedUserChatHistory[ticketForUpdateIndex].combinedMessages.push(newChatMessage)
-            }
-            console.log('oldHistory', this.userChatHistory)
-            this.userChatHistory = updatedUserChatHistory
-            console.log('updatedHistory', this.userChatHistory)
+            // const updatedUserChatHistory = JSON.parse(JSON.stringify(this.userChatHistory))
+            // const ticketForUpdateIndex = this.userChatHistory.findIndex(ticket => ticket.id === newChatMessage.ticket_id);
+            // if (ticketForUpdateIndex == -1) {
+            //     const newTicketChat = this.loadTicket(newChatMessage)
+            //     newTicketChat.combinedMessages = []
+            //     newTicketChat.combinedMessages.push(newChatMessage)
+            //     console.log('newTicketUpdate', newTicketChat)
+            //     updatedUserChatHistory.push(newTicketChat)
+            //     this.getUnassignedUserIssues()
+            // } else {
+            //     updatedUserChatHistory[ticketForUpdateIndex].combinedMessages.push(newChatMessage)
+            // }
+            // console.log('oldHistory', this.userChatHistory)
+            window.axios.get(`api/${route}?id=${data}`
+            ).then(userConversations => {
+                this.userChatHistory = userConversations.data
+                console.log('updatedHistory', this.userChatHistory)
+            })
         },
         getUnassignedUserIssues() {
             window.axios.get('/api/messages?noTicket')
@@ -79,7 +82,7 @@ export default {
                             countMap[userId] = (countMap[userId] || 0) + 1;
                             return countMap;
                         }, []);
-                        issueCount = Object.entries(issueCount).map(([key, value]) => ({ 'key': key, 'text': value, priority: obj.priority_id }))
+                        issueCount = Object.entries(issueCount).map(([key, value]) => ({ 'key': key, 'text': value, priority: obj.priority_id, ticketId: obj.id }))
                         issueNotifications.push(issueCount)
                     })
                     this.unresolvedUserIssues = issueNotifications.flat()

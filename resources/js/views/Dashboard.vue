@@ -157,12 +157,12 @@ export default {
         ],
         ticket: {
             title: 'xx',
-            status_id: 1,
-            priority_id: 1,
-            category_id: 1,
+            statusId: 1,
+            priorityId: 1,
+            categoryId: 1,
             description: '',
-            start_time: new Date(moment.utc().format('YYYY-MM-DD H:m:s')),
-            end_time: moment.utc().format('YYYY-MM-DD H:m:s'),
+            startTime: new Date(moment.utc().format('YYYY-MM-DD H:m:s')),
+            endTime: moment.utc().format('YYYY-MM-DD H:m:s'),
         },
         innerTicketData: {}
     }),
@@ -179,16 +179,24 @@ export default {
     methods: {
         saveTicket(action) {
             const ticket = JSON.parse(JSON.stringify(this.openOrPendingTicket))
-            console.log('ticket model', ticket)
+            // console.log('ticket model', ticket)
             ticket.combinedMessages = null
-            if (action === 'close') {
-                ticket.status_id = 3
-                ticket.end_time = moment.utc().format('YYYY-MM-DD H:m:s')
+            ticket.statusId = ticket.status_id
+            ticket.priorityId = ticket.priority_id
+            ticket.categoryId = ticket.category_id
+            ticket.userId = ticket.user_id
+            ticket.agentId = ticket.agent_id
+            ticket.startTime = moment(ticket.start_time).format('YYYY-MM-DD H:m:s')
+            if (action == 'close') {
+                ticket.statusId = 3
+                ticket.endTime = moment.utc().format('YYYY-MM-DD H:m:s')
             }
-            console.log('ticket model 2', ticket)
-            ticket.start_time = moment(ticket.start_time).format('YYYY-MM-DD H:m:s')
+            console.log('this ticket.model 2', ticket)
             window.axios.put(`/api/tickets/${ticket.id}` , ticket
             ).then((res) => {
+                if (action === 'close') { 
+                    this.$emit('update:unresolvedUserIssues')
+                }
                 console.log(res.data)
             }).catch((error) => {
                 console.log(error)

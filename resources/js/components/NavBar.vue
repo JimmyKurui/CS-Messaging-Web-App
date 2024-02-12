@@ -29,21 +29,25 @@
         <div v-if="cookie.agent_id" class="dropdown">
             <a class="nav-link" data-toggle="dropdown" href="#">
                 <i class="fa fa-bell"></i>
-                <span class="badge badge-danger">Notifications</span>
+                <span class="badge badge-danger">Issue Notifications</span>
             </a>
             <form action="" @submit.prevent="">
-                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu2">
-                    <a v-for="user in innerNotifications" @click.prevent="chooseUser(user.key)" href="#" class="dropdown-item">
+                <div class="dropdown-menu dropdown-menu-right" 
+                style="height: 50vh; overflow-y: auto"
+                aria-labelledby="dropdownMenu2"
+                >
+                    <a @click.prevent href="#" disabled><span>Order: By Oldest</span></a>
+                    <a v-for="user in innerNotifications" @click.prevent="chooseUser(user)" href="#" class="dropdown-item">
                         {{ user.key }} - 
-                        <span class="text-muted">{{ user.text }}</span> 
+                        <span class="text-black-50">{{ user.text }}</span> 
                         <span v-if=" user.priority == 'High'"  class="badge badge-danger">{{ user.priority }}</span>
                         <span v-if=" user.priority == 'Medium'" class="badge badge-warning">{{ user.priority }}</span>
                     </a>
                 </div>
             </form>
         </div>
-        <div class="ml-auto bg-info">
-            {{ cookie.user_id || cookie.agent_id }}
+        <div class="mx-3 pa-2 bg-info">
+            ID: {{ cookie.user_id || cookie.agent_id }}
         </div>
     </nav>
 </template>
@@ -82,29 +86,36 @@ export default {
     },
     methods: {
         chooseUser(user) {
-            window.axios.get(`/api/support?id=${user}`)
+            console.log('user',user)
+            window.axios.get(`/api/support?id=${user.key}`)
             .then(conversations => {
-                const combinedMessageText = conversations.data.reduce((messageText, note) => {
-                    if(!note.isAgent) { 
-                        messageText += note.body
-                    }
-                    return messageText
-                }, '')
+                // const combinedMessageText = conversations.data.reduce((messageText, note) => {
+                //     if(!note.isAgent) { 
+                //         messageText += note.body
+                //     }
+                //     return messageText
+                // }, '')
 
-                const messageIds = conversations.data.map((note) => {if(!note.isAgent) return note.id; })
-                console.log('combinedMessage', combinedMessageText, messageIds)
+                // const messageIds = conversations.data.map((note) => {if(!note.isAgent) return note.id; })
+                // console.log('combinedMessage', combinedMessageText, messageIds)
 
-                window.axios.post(`/api/tickets?autoTicket`, {
-                    userId: user,
+                // window.axios.post(`/api/tickets?autoTicket`, {
+                //     userId: user,
+                //     agentId: this.cookie.agent_id,
+                //     message: combinedMessageText,
+                //     messageIds
+                // }).then(autoTicket => {
+                //     console.log('auto ticket', autoTicket.data)
+                //     this.$emit('autoTicketCreated', autoTicket.data)
+                // }).catch(error => console.log(error))
+                window.axios.patch(`/api/tickets/${user.ticketId}`, {
                     agentId: this.cookie.agent_id,
-                    message: combinedMessageText,
-                    messageIds
-                }).then(autoTicket => {
-                    console.log('auto ticket', autoTicket.data)
-                    this.$emit('autoTicketCreated', autoTicket.data)
-                }).catch(error => console.log(error))
+                    statusId: 2
+                }).then(res => {
+                    this.$emit('update:unresolvedUserIssues')
+                    this.$emit('userConversationEmitted', conversations.data)
+                })
 
-                this.$emit('userConversationEmitted', conversations.data)
             }).catch(error => console.log(error))
         },
         unticketedUserMessages(userConversation) {

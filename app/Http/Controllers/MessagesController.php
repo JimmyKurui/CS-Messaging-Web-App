@@ -99,7 +99,7 @@ class MessagesController extends Controller
                     $query->where('ticket_id', null);
                 })
                 ->orWhere('end_time', null)
-                ->orWhere('agent_id', null)
+                ->where('agent_id', null)
                 ->with('messages')
                 ->orderBy('start_time')->get();
         return $usersMessages;
