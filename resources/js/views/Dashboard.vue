@@ -90,22 +90,25 @@
                             ></v-text-field>
                         </v-col> 
 
-                        <v-col cols="12" class="pa-0" md="6">
+                        <v-col cols="12" class="pa-0" lg="6">
                             <div class="form-group">
                                 <label for="start-time">Start Time</label>
-                                <input type="datetime-local" class="form-control" id="start-time" required>
+                                <input type="datetime-local" class="form-control" id="start-time" 
+                                v-model="openOrPendingTicket.start_time" required>
                             </div>
                         </v-col>
 
-                        <v-col cols="12" class="pa-0" md="6">
+                        <v-col cols="12" class="pa-0" lg="6">
                             <div class="form-group">
                                 <label for="start-time">End Time</label>
-                                <input type="datetime-local" class="form-control" id="end-time" disabled required>
+                                <input type="datetime-local" class="form-control" id="end-time" 
+                                v-model="openOrPendingTicket.end_time" disabled required>
                             </div>
                         </v-col>
 
                         <v-col cols="12" class="pa-0">
-                            <v-btn type="submit" color="success">Save</v-btn>
+                            <v-btn type="button" color="primary" @click="saveTicket('update')">Update Ticket</v-btn>
+                            <v-btn type="button" color="success" @click="saveTicket('close')">Close Ticket</v-btn>
                         </v-col>
                     </v-row>
                     </v-container>
@@ -164,12 +167,6 @@ export default {
         innerTicketData: {}
     }),
     computed: {
-        innerTicketData: {
-            get() { return this.ticketData},
-            set(newVal) {
-                // this.tick
-            } 
-        },
         formattedDate() {
             return this.ticket.start_time.toLocaleDateString('en-US')
         },
@@ -180,8 +177,22 @@ export default {
         },
     },
     methods: {
-        saveTicket() {
-            console.log('saved ticket', this.ticket.start_time)
+        saveTicket(action) {
+            const ticket = JSON.parse(JSON.stringify(this.openOrPendingTicket))
+            console.log('ticket model', ticket)
+            ticket.combinedMessages = null
+            if (action === 'close') {
+                ticket.status_id = 3
+                ticket.end_time = moment.utc().format('YYYY-MM-DD H:m:s')
+            }
+            console.log('ticket model 2', ticket)
+            ticket.start_time = moment(ticket.start_time).format('YYYY-MM-DD H:m:s')
+            window.axios.put(`/api/tickets/${ticket.id}` , ticket
+            ).then((res) => {
+                console.log(res.data)
+            }).catch((error) => {
+                console.log(error)
+            })
         },
     },
     created() {

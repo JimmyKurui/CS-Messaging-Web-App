@@ -18,8 +18,9 @@ class DatabaseSeeder extends Seeder
             StatusesTableSeeder::class,
             PrioritiesTableSeeder::class,
             CategoriesTableSeeder::class,
+            UserTypesSeeder::class,
             MessageSeeder::class,
-            UserTypesSeeder::class
+            TicketsSeeder::class,
         ]);
     }
 }

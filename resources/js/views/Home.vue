@@ -63,10 +63,8 @@ export default {
         setCookie(name, data) {
             const otherCookie = (name == 'agent_id') ? 'user_id' : 'agent_id' 
             if (this.$cookies.isKey(otherCookie)) {
-                console.log('cookie removed', otherCookie)
                 this.$cookies.remove(otherCookie);
             } 
-            console.log('cookie set', name)
             this.$cookies.set(name, data)
         }
     },
@@ -78,7 +76,6 @@ export default {
         }).catch(error => {
             console.log(error)
         })
-        console.log('mounted home', $cookies.keys(), this.cookie)
     }
 }
 </script>

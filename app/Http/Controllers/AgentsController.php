@@ -17,24 +17,8 @@ class AgentsController extends Controller
         $agent = Agent::findOrFail($request->id ?? $request->query('id'));
         // $agent = Agent::findOrFail(intval(json_decode($request->input('agent-id'))->id));
         $userConversations = Functions::getAllUserConversations(null, $agent->id);
-        $statuses = Status::all();
-        $priorities = Priority::all();
-        $categories = Category::all();
+        return response()->json($userConversations);
 
-        $tickets = new Ticket();
-        
-        // if ($request->hasCookie('user_id')) {
-        //     setcookie('user_id', null);
-        // } else {
-        //     setcookie('agent_id', $agent->id, time() + 180);
-        // }
-        if($request->is('api/dashboard')) {
-            return response()->json($userConversations);
-        }
-        return view('dashboard', compact('agent', 'userConversations', 'statuses','priorities','categories'));
-    }
-
-    public function messages() {
-        return view('messages.index');
+        // return view('dashboard', compact('agent', 'userConversations', 'statuses','priorities','categories'));
     }
 }

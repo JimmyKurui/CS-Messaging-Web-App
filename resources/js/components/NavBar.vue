@@ -20,7 +20,7 @@
             </ul>
         </div>
         <!-- <v-select v-if="cookie.agent_id" 
-        :items="unresolvedNotifications" 
+        :items="unresolvedUserIssues" 
         v-model="selectedUnresolvedUser"
         item-value="key"
         item-text="value"
@@ -33,7 +33,12 @@
             </a>
             <form action="" @submit.prevent="">
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenu2">
-                    <a v-for="user in unresolvedNotifications" @click.prevent="chooseUser(user.key)" href="#" class="dropdown-item">{{ user.key }} - <span class="badge badge-primary">{{ user.text  }}</span></a>
+                    <a v-for="user in innerNotifications" @click.prevent="chooseUser(user.key)" href="#" class="dropdown-item">
+                        {{ user.key }} - 
+                        <span class="text-muted">{{ user.text }}</span> 
+                        <span v-if=" user.priority == 'High'"  class="badge badge-danger">{{ user.priority }}</span>
+                        <span v-if=" user.priority == 'Medium'" class="badge badge-warning">{{ user.priority }}</span>
+                    </a>
                 </div>
             </form>
         </div>
@@ -49,20 +54,35 @@ export default {
         cookie: {
             type: Object,
             default: {}
-        }
+        },
+        unresolvedUserIssues: {
+            type: Array,
+            default:[], 
+        },
     },
     data() {
         return {
-            unresolvedNotifications: [],
-            selectedUnresolvedUser: 1
+            selectedUnresolvedUser: 0,
+            priorityEnum: {
+                1: 'Low;',
+                2: 'Medium',
+                3: 'High',
+            },
         }
     },
     computed: {
-        
+        innerNotifications() {
+            return this.unresolvedUserIssues.map(obj => {
+                return {
+                    ...obj,
+                    priority: this.priorityEnum[obj.priority]
+                };
+            });
+        }
     },
     methods: {
         chooseUser(user) {
-            window.axios.get(`/api/conversations?user=${user}`)
+            window.axios.get(`/api/support?id=${user}`)
             .then(conversations => {
                 const combinedMessageText = conversations.data.reduce((messageText, note) => {
                     if(!note.isAgent) { 
@@ -92,17 +112,7 @@ export default {
         }
     },
     mounted() {
-        console.log('navbar mounted', this.cookie)
-        window.axios.get('/api/messages?noTicket')
-            .then(res => {
-                let unresolvedMessages = res.data.reduce((countMap, obj) => {
-                    const userId = obj.user_id;
-                    countMap[userId] = (countMap[userId] || 0) + 1;
-                    return countMap;
-                }, []);
-                unresolvedMessages = Object.entries(unresolvedMessages).map(([key, value]) => ({ 'key': key, 'text': value }));
-                this.unresolvedNotifications = unresolvedMessages
-            })
+        console.log('navb', this.innerNotifications)
     },
 }
 </script>

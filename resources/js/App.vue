@@ -1,6 +1,11 @@
 <template>
     <v-app>
-        <nav-bar :cookie="cookie" @userConversationEmitted="loadUserChatHistory" @autoTicketCreated="loadTicket" />
+        <NavBar 
+        :unresolvedUserIssues="unresolvedUserIssues" 
+        :cookie="cookie"
+        @userConversationEmitted="loadUserChatHistory" 
+        @autoTicketCreated="loadTicket" />
+
         <router-view 
         @userChatHistoryEmitted="loadUserChatHistory" 
         @update:userChatHistory="updateUserChatHistory"
@@ -17,7 +22,7 @@ export default {
     components: { NavBar },
     data() {
         return {
-            unresolvedChatHistory: [],
+            unresolvedUserIssues: [],
             userChatHistory: [],
             cookie: {
                 agent_id: null,
@@ -35,26 +40,58 @@ export default {
                 console.log('Cookie assignment problem')
                 this.$router.push('/')
             }
-            console.log('load chat history', this.cookie, this.userChatHistory)
         },
-        loadTicket(data) {
-            console.log('load ticket')
-            this.ticketData = data
+        async loadTicket(data) {
+            try {
+                const response = await axios.get(`/api/tickets/${data.ticket_id}`);
+                const newTicket = await response.data;
+                console.log('newTicket', newTicket)
+                return newTicket;
+            } catch (error) {
+                console.log(error);
+                throw error;
+            }
         },
-        updateUserChatHistory(data) {
+        updateUserChatHistory(newChatMessage) {
             const updatedUserChatHistory = JSON.parse(JSON.stringify(this.userChatHistory))
-            const ticketForUpdateIndex = this.userChatHistory.findIndex(ticket => ticket.id === data.ticket_id);
-            updatedUserChatHistory[ticketForUpdateIndex].combinedMessages.push(data)
-            console.log('oldHistory', this.userChatHistory[ticketForUpdateIndex].combinedMessages.length)
+            const ticketForUpdateIndex = this.userChatHistory.findIndex(ticket => ticket.id === newChatMessage.ticket_id);
+            if (ticketForUpdateIndex == -1) {
+                const newTicketChat = this.loadTicket(newChatMessage)
+                newTicketChat.combinedMessages = []
+                newTicketChat.combinedMessages.push(newChatMessage)
+                console.log('newTicketUpdate', newTicketChat)
+                updatedUserChatHistory.push(newTicketChat)
+                this.getUnassignedUserIssues()
+            } else {
+                updatedUserChatHistory[ticketForUpdateIndex].combinedMessages.push(newChatMessage)
+            }
+            console.log('oldHistory', this.userChatHistory)
             this.userChatHistory = updatedUserChatHistory
-            console.log('updatedHistory', this.userChatHistory[ticketForUpdateIndex].combinedMessages.length)
+            console.log('updatedHistory', this.userChatHistory)
+        },
+        getUnassignedUserIssues() {
+            window.axios.get('/api/messages?noTicket')
+                .then(ticketChatResponse => {
+                    let issueNotifications = [];
+                    [...ticketChatResponse.data].forEach(obj => {
+                        let issueCount = obj.messages.reduce((countMap, obj) => {
+                            const userId = obj.user_id;
+                            countMap[userId] = (countMap[userId] || 0) + 1;
+                            return countMap;
+                        }, []);
+                        issueCount = Object.entries(issueCount).map(([key, value]) => ({ 'key': key, 'text': value, priority: obj.priority_id }))
+                        issueNotifications.push(issueCount)
+                    })
+                    this.unresolvedUserIssues = issueNotifications.flat()
+                    console.log(this.unresolvedUserIssues)
+                }).catch(error => { console.log(error) })
         }
     },
     mounted() {
         //   this.noDataText = this.$vuetify.t(this.noDataText);
         this.cookie.user_id = this.$cookies.get('user_id')
         this.cookie.agent_id = this.$cookies.get('agent_id')
-        console.log('mounted app', this.ticketData, this.userChatHistory)
+        this.getUnassignedUserIssues()
     }
 }
 </script>

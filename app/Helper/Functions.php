@@ -5,14 +5,14 @@ namespace App\Helper;
 use App\Events\MessageBroadcast;
 use App\Models\Message;
 use App\Models\Ticket;
-use App\Models\TicketMessage;
 use Exception;
-use Hamcrest\Type\IsBoolean;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class Functions
 {
+    const STATUS_OPEN = 1;
+    const STATUS_PENDING = 2;
+
     public static function getAllUserConversations($userId = null, $agentId = null)
     {
         try {
@@ -22,17 +22,15 @@ class Functions
                 ->where('agent_id', $agentId)
                 ->orderByDesc('id')
                 ->first()?->user_id;
-            // If no last user load first unfinished user issue
-            $userId = $userId ? $userId : Message::where('ticket_id', null)->orderBy('timestamp')->first()->user_id;
-
-            // ----- Join -----
-            // $userConversations = Message::leftJoin('ticket_messages', 'messages.ticket_id', '=', 'ticket_messages.ticket_id')
-
-            //     ->where('user_id', $userId)
-            //     ->orderByDesc('messages.timestamp')
-            //     ->orderByDesc('ticket_messages.timestamp')
-            //     ->select('messages.*', 'ticket_messages.agent_id', 'ticket_messages.timestamp as ticket_timestamp', 'ticket_messages.body as ticket_body')
-            //     ->get();
+            // If no last user load first unassigned user issue and assign agent
+            if(!$userId) {
+                $firstUnassignedTicket = Ticket::where('status_id', self::STATUS_OPEN)
+                    ->orderBy('id')->first();
+                $userId = $firstUnassignedTicket->user_id;
+                $firstUnassignedTicket->agent_id = $agentId;
+                $firstUnassignedTicket->status_id = self::STATUS_PENDING;
+                $firstUnassignedTicket->save();
+            }
 
             // ----- Union Of Messages and Ticket_Messages only -------
             // $userMessages = Message::select('id','user_id', 'timestamp', 'body', 'ticket_id')
@@ -56,11 +54,9 @@ class Functions
             foreach ($ticketsWithBothMessages as $ticket) {
                 $messages = $ticket->messages()->select('id', 'timestamp', 'body', 'user_id','ticket_id')
                     ->selectRaw("false as isAgent");
-                    // ->get();
 
                 $ticketMessages = $ticket->ticketMessages()->select('id', 'timestamp', 'body', 'agent_id','ticket_id')
                     ->selectRaw("true as isAgent");
-                    // ->get();
 
                 $combinedMessages = $messages->union($ticketMessages)->orderBy('timestamp')->get();
                 $ticket->setAttribute('combinedMessages', $combinedMessages);
@@ -94,11 +90,11 @@ class Functions
         }
     }
 
-    public static function broadcast(Request $request, $isAgent = false)
+    public static function broadcast(Request $request, $isAgent = false, $ticketId = null)
     {
         // broadcast(new PusherBroadcaster($request->get('message')))->toOthers();
         if ($request->broadcast) {
-            event(new MessageBroadcast($request->message, $request->code, $isAgent, $request->ticket_id));
+            event(new MessageBroadcast($request->message, $request->code, $isAgent, ($ticketId ?? $request->ticketId)) );
         }
     }
 

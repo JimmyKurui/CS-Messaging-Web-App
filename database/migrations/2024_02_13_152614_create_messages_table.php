@@ -19,10 +19,10 @@ class CreateMessagesTable extends Migration
                 $table->id();
                 $table->dateTime('timestamp')->default(Carbon::now());
                 $table->text('body');
-                $table->unsignedBigInteger('user_id')->index;
+                $table->unsignedBigInteger('user_id')->index();
                 $table->unsignedBigInteger('ticket_id')->index()->nullable();
 
-                // $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('no action');
                 $table->foreign('ticket_id')->references('id')->on('tickets')->onDelete('cascade');
             });
     }

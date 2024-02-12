@@ -72,14 +72,14 @@ export default {
                     message: this.newMessage,
                     code,
                     broadcast: this.broadcast,
-                    ticket_id: this.ascOrderedMessages[this.ascOrderedMessages.length - 1].ticket_id,
+                    ticketId: this.ascOrderedMessages[this.ascOrderedMessages.length - 1].ticket_id,
                     isAgent: this.cookie.agent_id ? 1 : 0,
                 }).then(res => {
                     const newMessage = {
-                        id: res.data.id,
+                        id: parseInt(res.data.id),
                         timestamp: res.data.timestamp,
                         body: res.data.body,
-                        user_id: res.data.user_id ?? res.data.agent_id,
+                        user_id: parseInt(res.data.user_id ?? res.data.agent_id),
                         ticket_id: res.data.ticket_id,
                         isAgent: !!parseInt(res.data.agent_id),
                     }
@@ -113,6 +113,7 @@ export default {
                     isAgent: !!parseInt(event.isAgent),
                     ticket_id: parseInt(event.ticketId),
                 }
+                console.log('event mes', newMessage)
                 this.$emit('update:userChatHistory', newMessage)
             }
         })

@@ -21,12 +21,21 @@ class UserTypesSeeder extends Seeder
             Agent::create(['id' => $i]);
         }
         // Customer users
-        $uniqueIds = Message::distinct()->pluck('user_id');
-        $uniqueIdsArray = $uniqueIds->map(function ($userId) {
-            return ['id' => $userId];
-        });   
-        // dd($uniqueIdsArray);
-        User::insert($uniqueIdsArray->toArray());
+        $csvFile = fopen('database\seeders\GeneralistRails_Project_MessageData.csv', 'r');
+        // Skip the header row
+        fgetcsv($csvFile);
+        $uniqueUserIds = [];
+        //  Unique id save
+        while (($data = fgetcsv($csvFile)) !== false) {
+            $userId = $data[0]; 
+            $uniqueUserIds[$userId] = true; 
+        }
+        fclose($csvFile);
+
+        // Insert unique user_id values into the users table
+        foreach (array_keys($uniqueUserIds) as $userId) {
+            User::firstOrCreate(['id' => $userId]);
+        }
 
     }
 }

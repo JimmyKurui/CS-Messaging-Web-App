@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class TicketsController extends Controller
 {
+    public $STATUS_RESOLVED = 3;
+
     public function index(Request $request)
     {
         $idParam = 'user_id';
@@ -20,15 +22,15 @@ class TicketsController extends Controller
             $tickets = Ticket::with('ticketMessages')->where('user_id', $request->query($idParam));
         }
         else {
-            $tickets = Ticket::with('ticketMessages');
+            $tickets = Ticket::all();
         }
         return response()->json($tickets);
         // return view('tickets', compact('tickets'));
     }
 
-    public function getTicketMessages($agentId) {
-        $ticketMessages = Ticket::where('agent_id', $agentId)->orderByDesc('timestamp')->get();
-        return $ticketMessages;
+    public function show($id) {
+        $ticket = Ticket::findOrFail($id);
+        return $ticket;
     }
 
     public function store(Request $request)
@@ -39,32 +41,27 @@ class TicketsController extends Controller
         else {
             $request->validate([
                 'title' => ['required', 'string', 'max:255'],
-                'priority_id' => ['required', 'integer', 'between:1,3'],
-                'status_id' => ['required', 'integer', 'between:1,3'],
-                'agent_id' => ['required', 'integer'],
-                'user_id' => ['required', 'integer'],
+                'priorityId' => ['required', 'integer', 'between:1,3'],
+                'statusId' => ['required', 'integer', 'between:1,3'],
+                // 'agentId' => ['required', 'integer'],
+                'userId' => ['required', 'integer'],
             ]);
         }
-
+        $priorityAndCategory = $priorityAndCategory ? $priorityAndCategory : null;
         try {
             return DB::transaction(function () use ($request, $priorityAndCategory) {
-                $ticket = new Ticket();
-                // $ticket = Ticket::create
-                $ticket->fill([
+                $ticket = Ticket::create([
                     'title' => $request->title ?? 'New title '.Carbon::now()->format('Y-m-d H:i:s'),
                     'description' => $request->description,
                     'labels' => $request->labels,
-                    'category_id' => $request->category_id ?? $priorityAndCategory['category'],
-                    'priority_id' => $request->priority_id ?? $priorityAndCategory['priority'],
+                    'category_id' => $request->categoryId ?? $priorityAndCategory['category'],
+                    'priority_id' => $request->priorityId ?? $priorityAndCategory['priority'],
                     'status_id' => $request->statusId ?? 1,
                     'agent_id' => $request->agentId,
                     'user_id' => $request->userId,
                     'start_time' => Carbon::now()->format('Y-m-d H:i:s'),
                     'end_time' => null
                 ]);
-
-                // Update ticket field on corresponding unticketed messages
-                // Message::whereIn('id', $request->messageIds)->update(['ticket_id' => $ticket->id]);
 
                 return response()->json($ticket);
 
@@ -74,12 +71,11 @@ class TicketsController extends Controller
         }
     }
 
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
         $request->validate([
-            'id' => ['required','integer'],
-            'title' => ['required', 'string', 'max:255'],
-            'start_time' => ['required', 'datetime'],
+            'title' => ['required', 'string'],
+            'start_time' => ['required'],
             'priority_id' => ['required', 'integer', 'between:1,3'],
             'status_id' => ['required', 'integer', 'between:1,3'],
             'agent_id' => ['required', 'integer'],
@@ -87,8 +83,8 @@ class TicketsController extends Controller
         ]);
 
         try {
-            return DB::transaction(function () use ($request) {
-                $ticket = new Ticket();
+            return DB::transaction(function () use ($request, $id) {
+                $ticket = Ticket::findOrFail($id);
                 $ticket->fill([
                     'title' => $request->title,
                     'description' => $request->description,
@@ -98,9 +94,10 @@ class TicketsController extends Controller
                     'status_id' => $request->status_id,
                     'agent_id' => $request->agent_id,
                     'user_id' => $request->user_id,
-                    'start_time' => Carbon::now(),
-                    'end_time' => null
+                    'start_time' => $request->start_time,
+                    'end_time' => $request->end_time,
                 ]);
+                $ticket->save();
 
                 return response()->json($ticket);
 

@@ -25,7 +25,7 @@ class CreateTicketsTable extends Migration
             $table->unsignedBigInteger('status_id')->index()->default(1);
             $table->unsignedBigInteger('priority_id')->index()->default(1);
             $table->unsignedBigInteger('category_id')->index()->nullable();
-            $table->unsignedBigInteger('agent_id')->index();
+            $table->unsignedBigInteger('agent_id')->index()->nullable();
             $table->unsignedBigInteger('user_id')->index();
 
             $table->foreign('agent_id')->references('id')->on('agents')->onDelete('cascade');
