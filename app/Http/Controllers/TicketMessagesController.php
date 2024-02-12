@@ -27,12 +27,12 @@ class TicketMessagesController extends Controller
 
         $ticket = Ticket::findOrFail($request->ticketId);
         // Disable new message if ticket is already resolved (3) 
-        if(($ticket->statusId == self::STATUS_RESOLVED) && $ticket->end_time !== null) {
+        if(($ticket->status_id == self::STATUS_RESOLVED) && $ticket->end_time !== null) {
             throw new Exception('Ticket already resolved');
         }
         // Disable new ticket message when agent_ids are different - NO Assignee functionality
-        if($ticket->agentId) {
-            if($ticket->agentId != $request->code) {
+        if($ticket->agent_id) {
+            if($ticket->agent_id != $request->code) {
                 throw new Exception('Different agents cannot work on same user message(s)!');
             }
         }

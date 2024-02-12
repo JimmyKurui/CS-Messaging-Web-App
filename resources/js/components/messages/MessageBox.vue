@@ -2,7 +2,7 @@
     <div class="chat">
         <div class="top px-3 py-1">
             <img style="width: 20%"
-                :src="cookie.agent_id ? agentAvatar : userAvatar"
+                :src="cookie.agent_id ? userAvatar : agentAvatar"
                 alt="PFP">
             <div>
                 <p id="ownerId">{{ cookie.agent_id ? "User" : "Agent" }}</p>
@@ -91,11 +91,16 @@ export default {
                     this.$emit('update:userChatHistory', newMessage)
                     this.broadcast = false
                     this.newMessage = ''
-                    console.log(this.ascOrderedMessages)
+                    this.handleMessagesScroll()
                 }).catch(error => {
                     console.error('Error broadcasting message:', error);
                 });
         },
+        handleMessagesScroll() {
+            const messagesContainer = document.querySelector('.messages')
+            // messagesContainer.scrollTop = messagesContainer.scrollHeight + 30;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight - messagesContainer.clientHeight + 30;
+        }
     },
     computed: {
         ascOrderedMessages() {
@@ -122,7 +127,7 @@ export default {
                 this.$emit('update:userChatHistory', newMessage)
             }
         })
-        console.log('mounted MessageBox')
+        this.handleMessagesScroll()
     }
 }
 </script>

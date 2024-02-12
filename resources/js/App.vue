@@ -4,7 +4,8 @@
         :unresolvedUserIssues="unresolvedUserIssues" 
         :cookie="cookie"
         @userConversationEmitted="loadUserChatHistory" 
-        @autoTicketCreated="loadTicket" />
+        @autoTicketCreated="loadTicket"
+        @update:unresolvedUserIssues = "getUnassignedUserIssues" />
 
         <router-view 
         @userChatHistoryEmitted="loadUserChatHistory" 
@@ -33,13 +34,20 @@ export default {
     },
     methods: {
         loadUserChatHistory(data) {
-            this.userChatHistory = data
-            this.cookie.user_id = this.$cookies.get('user_id');
-            this.cookie.agent_id = this.$cookies.get('agent_id');
-            if (!Object.values(this.cookie).includes(null)) {
-                console.log('Cookie assignment problem')
-                this.$router.push('/')
-            }
+            if (typeof data != 'object') {
+                window.axios.get(`api/support?id=${data}`
+                ).then(userConversations => {
+                    this.userChatHistory = userConversations.data
+                }).catch(err => {console.log(err)})
+            } else {
+                this.userChatHistory = data
+                this.cookie.user_id = this.$cookies.get('user_id');
+                this.cookie.agent_id = this.$cookies.get('agent_id');
+                if (!Object.values(this.cookie).includes(null)) {
+                    console.log('Cookie assignment problem')
+                    this.$router.push('/')
+                }
+            } 
         },
         async loadTicket(data) {
             try {
@@ -53,24 +61,26 @@ export default {
             }
         },
         updateUserChatHistory(newChatMessage) {
-            // const updatedUserChatHistory = JSON.parse(JSON.stringify(this.userChatHistory))
-            // const ticketForUpdateIndex = this.userChatHistory.findIndex(ticket => ticket.id === newChatMessage.ticket_id);
-            // if (ticketForUpdateIndex == -1) {
-            //     const newTicketChat = this.loadTicket(newChatMessage)
-            //     newTicketChat.combinedMessages = []
-            //     newTicketChat.combinedMessages.push(newChatMessage)
-            //     console.log('newTicketUpdate', newTicketChat)
-            //     updatedUserChatHistory.push(newTicketChat)
-            //     this.getUnassignedUserIssues()
-            // } else {
-            //     updatedUserChatHistory[ticketForUpdateIndex].combinedMessages.push(newChatMessage)
-            // }
+            const updatedUserChatHistory = JSON.parse(JSON.stringify(this.userChatHistory))
+            const ticketForUpdateIndex = this.userChatHistory.findIndex(ticket => ticket.id === newChatMessage.ticket_id);
+            if (ticketForUpdateIndex == -1) {
+                // const newTicketChat = this.loadTicket(newChatMessage)
+                // newTicketChat.combinedMessages = []
+                // newTicketChat.combinedMessages.push(newChatMessage)
+                // console.log('newTicketUpdate', newTicketChat)
+                // updatedUserChatHistory.push(newTicketChat)
+                // this.getUnassignedUserIssues()
+                window.axios.get(`api/support?id=${newChatMessage.user_id}`
+                ).then(userConversations => {
+                    this.userChatHistory = userConversations.data
+                    console.log('updatedHistory', this.userChatHistory)
+                })
+            } else {
+                updatedUserChatHistory[ticketForUpdateIndex].combinedMessages.push(newChatMessage)
+                this.userChatHistory = updatedUserChatHistory
+            }
             // console.log('oldHistory', this.userChatHistory)
-            window.axios.get(`api/${route}?id=${data}`
-            ).then(userConversations => {
-                this.userChatHistory = userConversations.data
-                console.log('updatedHistory', this.userChatHistory)
-            })
+        
         },
         getUnassignedUserIssues() {
             window.axios.get('/api/messages?noTicket')

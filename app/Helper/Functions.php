@@ -3,6 +3,7 @@
 namespace App\Helper;
 
 use App\Events\MessageBroadcast;
+use App\Events\TicketBroadcast;
 use App\Models\Message;
 use App\Models\Ticket;
 use Exception;
@@ -96,6 +97,11 @@ class Functions
         if ($request->broadcast) {
             event(new MessageBroadcast($request->message, $request->code, $isAgent, ($ticketId ?? $request->ticketId)) );
         }
+    }
+
+    public static function broadcastTicketSelection()
+    {
+            event(new TicketBroadcast());
     }
 
     public static function checkPriorityAndCategory(string $text): array

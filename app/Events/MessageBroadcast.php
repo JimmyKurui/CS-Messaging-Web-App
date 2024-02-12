@@ -31,8 +31,6 @@ class MessageBroadcast implements ShouldBroadcast
         $this->code = $code;
         $this->isAgent = $isAgent;
         $this->ticketId = $ticketId;
-
-
     }
 
     /**
